@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Wplace Overlay Pro (@SrCratier)
+// @name         Wplace Overlay Pro Max
 // @namespace    http://tampermonkey.net/
-// @version      4.9.2
+// @version      4.9.3
 // @description  Overlays tiles on wplace.live. Can also resize, and color-match your overlay to wplace's palette. Make sure to comply with the site's Terms of Service, and rules! This script is not affiliated with Wplace.live in any way, use at your own risk. This script is not affiliated with TamperMonkey. The author of this userscript is not responsible for any damages, issues, loss of data, or punishment that may occur as a result of using this script. This script is provided "as is" under GPLv3.
-// @author       shinkonet (Modified by @SrCratier, Translated by Lamechial)
+// @author       shinkonet → @SrCratier → Lamechial → T-Raptor
 // @updateURL    https://raw.githubusercontent.com/Lamechial/Wplace_VoX-Overlay-Pro/refs/heads/main/WplacePro-VoX.user-English.js
 // @downloadURL  https://raw.githubusercontent.com/Lamechial/Wplace_VoX-Overlay-Pro/refs/heads/main/WplacePro-VoX.user-English.js
 // @match        https://wplace.live/*
@@ -24,6 +24,7 @@
   const TILE_SIZE = 1000;
   const MAX_OVERLAY_DIM = 1000;
   const MINIFY_SCALE = 3;
+  const MINIFY_SCALE_SYMBOL = 7;
   const NATIVE_FETCH = window.fetch;
   const tileDataCache = new Map();
 
@@ -128,6 +129,55 @@
   };
   const DEFAULT_FREE_KEYS = WPLACE_FREE.map(([r,g,b]) => `${r},${g},${b}`);
   const DEFAULT_PAID_KEYS = [];
+  const SYMBOL_W = 5;
+  const SYMBOL_H = 5;
+  const SYMBOL_TILES = new Uint32Array([4897444, 4756004, 15241774, 11065002, 15269550, 33209205, 15728622, 15658734, 33226431, 33391295, 32641727, 15589098, 11516906, 9760338, 15399560, 4685802, 15587182, 29206876, 3570904, 15259182, 29224831, 21427311, 22511061, 15161013, 4667844, 11392452, 11375466, 6812424, 5225454, 29197179, 18285009, 31850982, 19267878, 16236308, 33481548, 22708917, 14352822, 7847326, 7652956, 22501038, 28457653, 9179234, 30349539, 4685269, 18295249, 26843769, 24483191, 5211003, 14829567, 17971345, 28873275, 4681156, 21392581, 7460636, 23013877, 29010254, 18846257, 21825364, 29017787, 4357252, 23057550, 26880179, 5242308, 15237450]);
+
+  const ALL_COLORS = [...WPLACE_FREE, ...WPLACE_PAID];
+  const colorIndexMap = new Map();
+  ALL_COLORS.forEach((c, i) => colorIndexMap.set(c.join(','), i));
+
+  const LUT_SIZE = 32;
+  const LUT_SHIFT = 8 - Math.log2(LUT_SIZE);
+  const colorLUT = new Uint8Array(LUT_SIZE * LUT_SIZE * LUT_SIZE);
+
+  function buildColorLUT() {
+    for (let r = 0; r < LUT_SIZE; r++) {
+      for (let g = 0; g < LUT_SIZE; g++) {
+        for (let b = 0; b < LUT_SIZE; b++) {
+          const idx = r * LUT_SIZE * LUT_SIZE + g * LUT_SIZE + b;
+          const scaledR = (r << LUT_SHIFT) + (1 << (LUT_SHIFT - 1));
+          const scaledG = (g << LUT_SHIFT) + (1 << (LUT_SHIFT - 1));
+          const scaledB = (b << LUT_SHIFT) + (1 << (LUT_SHIFT - 1));
+          colorLUT[idx] = findClosestColorIndex(scaledR, scaledG, scaledB);
+        }
+      }
+    }
+  }
+
+  function findColorIndexLUT(r, g, b) {
+    const lutR = r >> LUT_SHIFT;
+    const lutG = g >> LUT_SHIFT;
+    const lutB = b >> LUT_SHIFT;
+    return colorLUT[lutR * LUT_SIZE * LUT_SIZE + lutG * LUT_SIZE + lutB];
+  }
+
+  function findClosestColorIndex(r, g, b) {
+    let minDistance = Infinity;
+    let index = 0;
+    for (let i = 0; i < ALL_COLORS.length; i++) {
+      const [cr, cg, cb] = ALL_COLORS[i];
+      const dist = Math.abs(r - cr) + Math.abs(g - cg) + Math.abs(b - cb);
+      if (dist < minDistance) {
+        minDistance = dist;
+        index = i;
+      }
+    }
+    return index;
+  }
+
+  buildColorLUT();
+
   const page = unsafeWindow;
 
     let lastKnownAvailableColors = new Set();
@@ -353,11 +403,6 @@ const DONATORS = [
     if (!ov.enabled || !ov.imageBase64 || !ov.pixelUrl) return null;
     if (tooLargeOverlays.has(ov.id)) return null;
 
-    const scale = MINIFY_SCALE;
-    const sig = overlaySignature(ov);
-    const cacheKey = `${ov.id}|${sig}|minify|s${scale}|${targetChunk1}|${targetChunk2}|errors=${config.showErrors}|filter=${config.caIsFilterActive}`;
-    if (overlayCache.has(cacheKey)) return overlayCache.get(cacheKey);
-
     const img = await loadImage(ov.imageBase64);
     if (!img) return null;
     const wImg = img.width, hImg = img.height;
@@ -371,91 +416,176 @@ const DONATORS = [
 
     const drawX = (base.chunk1 * TILE_SIZE + base.posX + ov.offsetX) - (targetChunk1 * TILE_SIZE);
     const drawY = (base.chunk2 * TILE_SIZE + base.posY + ov.offsetY) - (targetChunk2 * TILE_SIZE);
-    const tileW = TILE_SIZE * scale;
-    const tileH = TILE_SIZE * scale;
-    const drawXScaled = Math.round(drawX * scale);
-    const drawYScaled = Math.round(drawY * scale);
-    const wScaled = wImg * scale;
-    const hScaled = hImg * scale;
-    const isect = rectIntersect(0, 0, tileW, tileH, drawXScaled, drawYScaled, wScaled, hScaled);
-    if (isect.w === 0 || isect.h === 0) { overlayCache.set(cacheKey, null); return null; }
 
-    const canvas = createCanvas(tileW, tileH);
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, tileW, tileH);
-    ctx.drawImage(img, 0, 0, wImg, hImg, drawXScaled, drawYScaled, wScaled, hScaled);
+    if (config.minifyStyle === 'symbols') {
+      const scale = MINIFY_SCALE_SYMBOL;
+      const sig = overlaySignature(ov);
+      const cacheKey = `${ov.id}|${sig}|minify|s${scale}|style:symbols|${targetChunk1}|${targetChunk2}`;
+      if (overlayCache.has(cacheKey)) return overlayCache.get(cacheKey);
 
-    const imageData = ctx.getImageData(isect.x, isect.y, isect.w, isect.h);
-    const data = imageData.data;
-    const colorStrength = ov.opacity;
-    const whiteStrength = 1 - colorStrength;
-    const center = Math.floor(scale / 2);
-    const width = isect.w;
-    const isErrorCheckMode = config.showErrors && originalTileImageData;
-    const errorCache = new Map();
-    const filterSet = config.caIsFilterActive ? new Set(config.caActiveColorFilter) : null;
+      const tileW = TILE_SIZE * scale;
+      const tileH = TILE_SIZE * scale;
 
-    for (let i = 0; i < data.length; i += 4) {
-      const r_ov = data[i], g_ov = data[i+1], b_ov = data[i+2], a = data[i+3];
-      if (a < 250) {
-        data[i+3] = 0;
-        continue;
+      const canvas = createCanvas(wImg, hImg);
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0);
+      const originalImageData = ctx.getImageData(0, 0, wImg, hImg);
+
+      const outCanvas = createCanvas(tileW, tileH);
+      const outCtx = outCanvas.getContext('2d', { willReadFrequently: true });
+      const outputImageData = outCtx.createImageData(tileW, tileH);
+      const outData = outputImageData.data;
+
+      const centerX = (scale - SYMBOL_W) >> 1;
+      const centerY = (scale - SYMBOL_H) >> 1;
+
+      for (let y = 0; y < TILE_SIZE; y++) {
+        for (let x = 0; x < TILE_SIZE; x++) {
+          const imgX = x - drawX;
+          const imgY = y - drawY;
+          if (imgX >= 0 && imgX < wImg && imgY >= 0 && imgY < hImg) {
+            const idx = (imgY * wImg + imgX) * 4;
+            const r = originalImageData.data[idx];
+            const g = originalImageData.data[idx + 1];
+            const b = originalImageData.data[idx + 2];
+            const a = originalImageData.data[idx + 3];
+            if (a <= 128) continue;
+
+            const colorKey = `${r},${g},${b}`;
+            let colorIndex = colorIndexMap.get(colorKey);
+            if (colorIndex === undefined) {
+              colorIndex = findColorIndexLUT(r, g, b);
+            }
+
+            if (colorIndex < SYMBOL_TILES.length) {
+              const symbol = SYMBOL_TILES[colorIndex];
+              const tileX = x * scale;
+              const tileY = y * scale;
+              const paletteColor = ALL_COLORS[colorIndex];
+              const a_r = paletteColor[0];
+              const a_g = paletteColor[1];
+              const a_b = paletteColor[2];
+
+              for (let sy = 0; sy < SYMBOL_H; sy++) {
+                for (let sx = 0; sx < SYMBOL_W; sx++) {
+                  const bit_idx = sy * SYMBOL_W + sx;
+                  const bit = (symbol >>> bit_idx) & 1;
+                  if (bit) {
+                    const outX = tileX + sx + centerX;
+                    const outY = tileY + sy + centerY;
+                    if (outX >= 0 && outX < tileW && outY >= 0 && outY < tileH) {
+                      const outIdx = (outY * tileW + outX) * 4;
+                      outData[outIdx] = a_r;
+                      outData[outIdx + 1] = a_g;
+                      outData[outIdx + 2] = a_b;
+                      outData[outIdx + 3] = 255;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-      const colorKey = `${r_ov},${g_ov},${b_ov}`;
-      if (filterSet && !filterSet.has(colorKey)) {
+
+      outCtx.putImageData(outputImageData, 0, 0);
+      const finalImageData = outCtx.getImageData(0, 0, tileW, tileH);
+      const result = { imageData: finalImageData, dx: 0, dy: 0, scaled: true, scale };
+      overlayCache.set(cacheKey, result);
+      return result;
+    } else {
+      const scale = MINIFY_SCALE;
+      const sig = overlaySignature(ov);
+      const cacheKey = `${ov.id}|${sig}|minify|s${scale}|style:dashes|${targetChunk1}|${targetChunk2}|errors=${config.showErrors}|filter=${config.caIsFilterActive}`;
+      if (overlayCache.has(cacheKey)) return overlayCache.get(cacheKey);
+
+      const tileW = TILE_SIZE * scale;
+      const tileH = TILE_SIZE * scale;
+      const drawXScaled = Math.round(drawX * scale);
+      const drawYScaled = Math.round(drawY * scale);
+      const wScaled = wImg * scale;
+      const hScaled = hImg * scale;
+      const isect = rectIntersect(0, 0, tileW, tileH, drawXScaled, drawYScaled, wScaled, hScaled);
+      if (isect.w === 0 || isect.h === 0) { overlayCache.set(cacheKey, null); return null; }
+
+      const canvas = createCanvas(tileW, tileH);
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, tileW, tileH);
+      ctx.drawImage(img, 0, 0, wImg, hImg, drawXScaled, drawYScaled, wScaled, hScaled);
+
+      const imageData = ctx.getImageData(isect.x, isect.y, isect.w, isect.h);
+      const data = imageData.data;
+      const colorStrength = ov.opacity;
+      const whiteStrength = 1 - colorStrength;
+      const center = Math.floor(scale / 2);
+      const width = isect.w;
+      const isErrorCheckMode = config.showErrors && originalTileImageData;
+      const errorCache = new Map();
+      const filterSet = config.caIsFilterActive ? new Set(config.caActiveColorFilter) : null;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r_ov = data[i], g_ov = data[i+1], b_ov = data[i+2], a = data[i+3];
+        if (a < 250) {
           data[i+3] = 0;
           continue;
+        }
+        const colorKey = `${r_ov},${g_ov},${b_ov}`;
+        if (filterSet && !filterSet.has(colorKey)) {
+            data[i+3] = 0;
+            continue;
+        }
+
+        const px = (i / 4) % width;
+        const py = Math.floor((i / 4) / width);
+        const absX = isect.x + px;
+        const absY = isect.y + py;
+        const relX = absX % scale;
+        const relY = absY % scale;
+        const shouldDrawPattern = getPattern(colorKey, relX, relY, center, scale);
+
+        if (isErrorCheckMode) {
+            const originalX = Math.floor(absX / scale);
+            const originalY = Math.floor(absY / scale);
+            const blockKey = `${originalX},${originalY}`;
+            let isMatch = false;
+            if (errorCache.has(blockKey)) {
+                isMatch = errorCache.get(blockKey);
+            } else {
+                const originalIndex = (originalY * TILE_SIZE + originalX) * 4;
+                const r_orig = originalTileImageData.data[originalIndex];
+                const g_orig = originalTileImageData.data[originalIndex+1];
+                const b_orig = originalTileImageData.data[originalIndex+2];
+                isMatch = isColorSimilar(r_ov, g_ov, b_ov, r_orig, g_orig, b_orig);
+                errorCache.set(blockKey, isMatch);
+            }
+            if (isMatch) {
+                data[i+3] = 0;
+                continue;
+            } else {
+                if (shouldDrawPattern) {
+                    data[i] = r_ov; data[i+1] = g_ov; data[i+2] = b_ov; data[i+3] = 255;
+                } else {
+                    data[i] = 237; data[i+1] = 28; data[i+2] = 36; data[i+3] = 255;
+                }
+            }
+        } else {
+            if (shouldDrawPattern) {
+                data[i] = Math.round(r_ov * colorStrength + 255 * whiteStrength);
+                data[i + 1] = Math.round(g_ov * colorStrength + 255 * whiteStrength);
+                data[i + 2] = Math.round(b_ov * colorStrength + 255 * whiteStrength);
+                data[i + 3] = 255;
+            } else {
+                data[i+3] = 0;
+            }
+        }
       }
 
-      const px = (i / 4) % width;
-      const py = Math.floor((i / 4) / width);
-      const absX = isect.x + px;
-      const absY = isect.y + py;
-      const relX = absX % scale;
-      const relY = absY % scale;
-      const shouldDrawPattern = getPattern(colorKey, relX, relY, center, scale);
-
-      if (isErrorCheckMode) {
-          const originalX = Math.floor(absX / scale);
-          const originalY = Math.floor(absY / scale);
-          const blockKey = `${originalX},${originalY}`;
-          let isMatch = false;
-          if (errorCache.has(blockKey)) {
-              isMatch = errorCache.get(blockKey);
-          } else {
-              const originalIndex = (originalY * TILE_SIZE + originalX) * 4;
-              const r_orig = originalTileImageData.data[originalIndex];
-              const g_orig = originalTileImageData.data[originalIndex+1];
-              const b_orig = originalTileImageData.data[originalIndex+2];
-              isMatch = isColorSimilar(r_ov, g_ov, b_ov, r_orig, g_orig, b_orig);
-              errorCache.set(blockKey, isMatch);
-          }
-          if (isMatch) {
-              data[i+3] = 0;
-              continue;
-          } else {
-              if (shouldDrawPattern) {
-                  data[i] = r_ov; data[i+1] = g_ov; data[i+2] = b_ov; data[i+3] = 255;
-              } else {
-                  data[i] = 237; data[i+1] = 28; data[i+2] = 36; data[i+3] = 255;
-              }
-          }
-      } else {
-          if (shouldDrawPattern) {
-              data[i] = Math.round(r_ov * colorStrength + 255 * whiteStrength);
-              data[i + 1] = Math.round(g_ov * colorStrength + 255 * whiteStrength);
-              data[i + 2] = Math.round(b_ov * colorStrength + 255 * whiteStrength);
-              data[i + 3] = 255;
-          } else {
-              data[i+3] = 0;
-          }
-      }
+      const result = { imageData, dx: isect.x, dy: isect.y, scaled: true, scale };
+      overlayCache.set(cacheKey, result);
+      return result;
     }
-
-    const result = { imageData, dx: isect.x, dy: isect.y, scaled: true, scale };
-    overlayCache.set(cacheKey, result);
-    return result;
   }
 
   async function mergeOverlaysBehind(originalBlob, overlayDatas) {
@@ -495,7 +625,7 @@ const DONATORS = [
 
   async function composeMinifiedTile(originalBlob, overlayDatas) {
     if (!overlayDatas || overlayDatas.length === 0) return originalBlob;
-    const scale = MINIFY_SCALE;
+    const scale = config.minifyStyle === 'symbols' ? MINIFY_SCALE_SYMBOL : MINIFY_SCALE;
     const originalImage = await blobToImage(originalBlob);
     const w = originalImage.width, h = originalImage.height;
     const canvas = createCanvas(w * scale, h * scale);
@@ -752,6 +882,7 @@ function showToast(message, duration = 3000) {
     overlays: [],
     activeOverlayId: null,
     overlayMode: 'minify',
+    minifyStyle: 'dashes',
     isPanelCollapsed: false,
     autoCapturePixelUrl: false,
     showOverlay: true,
@@ -1183,7 +1314,7 @@ panel.innerHTML = `
             <button class="op-tab-btn" data-tab="tools">Tools</button>
         </div>
 
-        <div class="op-tab-panes op-section" style="padding-top: 12px; border-top-left-radius: 0;">
+        <div class="op-tab-panes op-section" style="padding-top: 12px;">
             <div class="op-tab-pane active" data-pane="overlays">
                 <div class="op-row space">
                     <button class="op-button" id="op-add-overlay" title="Create a new overlay">+ Add</button>
@@ -1253,13 +1384,13 @@ panel.innerHTML = `
             </div>
 
             <div class="op-tab-pane" data-pane="tools">
-                <div>
+                <div class="op-section">
                     <span style="font-weight:600; text-align:center; margin-bottom: 8px;">Copy Canvas</span>
-                    <div class="op-row space">
+                    <div class="op-row space" style="margin-bottom: 8px;">
                         <button class="op-button" id="op-copy-set-a">Set Point A</button>
                         <span class="op-muted" id="op-copy-a-coords">Not set</span>
                     </div>
-                    <div class="op-row space">
+                    <div class="op-row space" style="margin-bottom: 8px;">
                         <button class="op-button" id="op-copy-set-b">Set Point B</button>
                         <span class="op-muted" id="op-copy-b-coords">Not set</span>
                     </div>
@@ -1289,6 +1420,20 @@ panel.innerHTML = `
                     </div>
                 </div>
 
+                <div class="op-section" id="op-minify-settings-section" style="margin-top: 12px;">
+                    <div class="op-row space">
+                      <div style="font-weight: 600;">Minify Style</div>
+                      <div class="op-row" style="align-items: center; gap: 8px;">
+                          <input type="radio" id="op-style-dashes" name="minify-style" value="dashes" checked>
+                          <label for="op-style-dashes" style="margin: 0; cursor: pointer;">Dashes</label>
+                      </div>
+                      <div class="op-row" style="align-items: center; gap: 8px;">
+                          <input type="radio" id="op-style-symbols" name="minify-style" value="symbols">
+                          <label for="op-style-symbols" style="margin: 0; cursor: pointer;">Symbols</label>
+                      </div>
+                    </div>
+                </div>
+
                 <div id="op-color-analysis-section" class="op-section" style="margin-top: 12px; padding: 12px; align-items: center;">
                     <button class="op-button" id="op-analyze-colors-btn" style="width: 100%;">Show Overlay Progress</button>
                 </div>
@@ -1314,19 +1459,6 @@ panel.innerHTML = `
             <label>Panel Transparency</label>
         </div>
         <input type="range" id="op-panel-alpha-slider" min="0.4" max="1" step="0.05">
-        <div class="op-donation-section">
-            <p>This project is free, but I would appreciate a donation to support the project ❤️</p>
-            <div class="op-donation-info">
-                <span>Binance ID:</span>
-                <code>851390091</code>
-            </div>
-            <div class="op-donation-info">
-                <span>PayPal:</span>
-                <code>@srcratier</code>
-            </div>
-        </div>
-         <button class="op-button op-show-donators">❤️ See Acknowledgments</button>
-         <div class="op-donators-list-wrap"></div>
     `;
     document.body.appendChild(settingsModal);
 
@@ -1760,6 +1892,25 @@ function addEventListeners() {
         ensureHook();
         updateUI();
         forceTileRefresh();
+    });
+    
+    // Minify style radio buttons (tools tab)
+    document.querySelectorAll('input[name="minify-style"]').forEach(radio => {
+        radio.addEventListener('change', async (e) => {
+            const newStyle = e.target.value;
+            if (config.minifyStyle === newStyle) return;
+            
+            config.minifyStyle = newStyle;
+            await saveConfig(['minifyStyle']);
+            clearOverlayCache();
+            updateUI();
+            
+            // Only force refresh on minify mode
+            if (config.overlayMode === 'minify') {
+                forceTileRefresh();
+                showToast(`Minify style changed to ${newStyle === 'dashes' ? 'dashes' : 'symbols'}`);
+            }
+        });
     });
 
     document.querySelectorAll('.op-tab-btn').forEach(btn => {
@@ -2458,6 +2609,16 @@ function updateUI() {
     const modeBtn = $('op-mode-toggle');
     const modeMap = { behind: 'Behind', above: 'Above', minify: `Minify ◻`, original: 'Original' };
     modeBtn.textContent = `Mode: ${modeMap[config.overlayMode] || 'Original'}`;
+    
+    // Sync minify style radio buttons in tools tab
+    const dashesRadio = document.getElementById('op-style-dashes');
+    const symbolsRadio = document.getElementById('op-style-symbols');
+    
+    if (dashesRadio && symbolsRadio) {
+        dashesRadio.checked = (config.minifyStyle === 'dashes');
+        symbolsRadio.checked = (config.minifyStyle === 'symbols');
+    }
+
     const autoBtn = $('op-autocap-toggle');
     autoBtn.textContent = `Set Position: ${config.autoCapturePixelUrl ? 'ON' : 'OFF'}`;
     const showErrorBtn = $('op-show-errors-toggle');
