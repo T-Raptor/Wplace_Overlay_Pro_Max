@@ -938,19 +938,19 @@ function injectStyles() {
     const style = document.createElement('style');
     style.textContent = `
       body.op-theme-light {
-        --op-bg: #f0f0f5; --op-border: #dcdcec; --op-muted: #6b7280; --op-text: #111827;
-        --op-subtle: #ffffff; --op-btn: #eef2f7; --op-btn-border: #d8dee8; --op-btn-hover: #e7ecf5;
-        --op-accent: #8A2BE2;
-        --op-active-bg: #8A2BE2;
-        --op-active-text: #ffffff;
+        --op-bg: #e4e4e4; --op-border: #cccccc; --op-muted: #666666; --op-text: #1f1f1f;
+        --op-subtle: #f5f5f5; --op-btn: #d8d8d8; --op-btn-border: #c0c0c0; --op-btn-hover: #cfcfcf;
+        --op-accent: #8f0000;
+        --op-active-bg: #8f0000;
+        --op-active-text: #e4e4e4;
         --op-neon-green: #39FF14;
       }
       body.op-theme-dark {
-        --op-bg: #12121c; --op-border: #2a2a4a; --op-muted: #a0a7b4; --op-text: #f5f6f9;
-        --op-subtle: #1a1a2e; --op-btn: #2a2a4a; --op-btn-border: #38385a; --op-btn-hover: #3c3c6a;
-        --op-accent: #A020F0;
-        --op-active-bg: #8A2BE2;
-        --op-active-text: #ffffff;
+        --op-bg: #1f1f1f; --op-border: #3a3a3a; --op-muted: #a0a0a0; --op-text: #e4e4e4;
+        --op-subtle: #2a2a2a; --op-btn: #3a3a3a; --op-btn-border: #4a4a4a; --op-btn-hover: #454545;
+        --op-accent: #8f0000;
+        --op-active-bg: #8f0000;
+        --op-active-text: #e4e4e4;
         --op-neon-green: #39FF14;
       }
 
@@ -963,7 +963,7 @@ function injectStyles() {
         border: 1px solid var(--op-border);
         border-radius: 16px; color: var(--op-text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
         font-size: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25), 0 0 0 1px rgba(138, 43, 226, 0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25), 0 0 0 1px rgba(143, 0, 0, 0.2);
         user-select: none;
       }
       #overlay-pro-panel { width: 340px; }
@@ -1013,10 +1013,10 @@ function injectStyles() {
       /* SLIDER STYLES */
       input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; cursor: pointer; }
       input[type="range"]:focus { outline: none; }
-      input[type="range"]::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, #8A2BE2); border-radius: 4px; }
-      input[type="range"]::-moz-range-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, #8A2BE2); border-radius: 4px; }
-      input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -6px; height: 20px; width: 20px; background-color: #A020F0; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px #A020F0; }
-      input[type="range"]::-moz-range-thumb { height: 20px; width: 20px; background-color: #A020F0; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px #A020F0; }
+      input[type="range"]::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, #8f0000); border-radius: 4px; }
+      input[type="range"]::-moz-range-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, #8f0000); border-radius: 4px; }
+      input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -6px; height: 20px; width: 20px; background-color: #8f0000; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px #8f0000; }
+      input[type="range"]::-moz-range-thumb { height: 20px; width: 20px; background-color: #8f0000; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px #8f0000; }
 
       .op-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; border: 1px solid var(--op-border); padding: 6px; border-radius: 10px; background: var(--op-bg); }
       .op-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px; border-radius: 8px; border: 1px solid var(--op-border); background: var(--op-subtle); }
