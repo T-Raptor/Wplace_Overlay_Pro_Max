@@ -704,7 +704,7 @@ function forceTileRefresh() {
             retries++;
             if (retries >= MAX_RETRIES) {
                 clearInterval(refreshInterval);
-                showToast('Error: Could not find a game canvas to refresh.', 3000);
+                console.log('[Overlay Pro] Could not find game canvas to refresh after retries.');
             }
         }
     };
