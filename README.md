@@ -1,112 +1,87 @@
-# VoX - Overlay Pro: A Complete User Guide -_-/
-**Based on shinkonet's code, adapted and enhanced for Wplace.**
-This guide is translated to English from SrCratier's build using DeepL.
+# `Overlay Pro Max` Manual
 
-Welcome to **VoX - Overlay Pro**!  
-This guide will help you master all the tools that the script makes available to you, from placing your first design to using the most advanced features for coordination and planning.
+> Created by [**shinkonet**](https://github.com/shinkonet)  
+> Modified by [**SrCratier**](https://github.com/SrCratier)  
+> Translated by [**Lamechial**](https://github.com/Lamechial)  
+> Customized by [**T-Raptor**](https://github.com/T-Raptor)
 
----
+Welcome to **Overlay Pro Max**! This guide will help you set up your overlay and master the tools for pixel-perfect coordination.
 
 ## **1. Installation**
 
-To use the script, you first need a browser extension called **Tampermonkey**.
+You need the **Violentmonkey** browser extension to run this script.
 
-1. Install Tampermonkey:
+1. **Install Violentmonkey:**
+    * [Chrome](https://chrome.google.com/webstore/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag) (Might not be able to download due to Manifest V3)
+    * [Firefox](https://addons.mozilla.org/firefox/addon/violentmonkey/)
+    * [Edge](https://microsoftedge.microsoft.com/addons/detail/violentmonkey/eeagobfjdenkkddmbclomhiblgggliao)
+    * [Others](https://violentmonkey.github.io/get-it/)
+    * *Mobile Users: Please use the Microsoft Edge browser.*
 
-**IMPORTANT: FOR PHONES, IT ONLY WORKS WITH THE MICROSOFT EDGE BROWSER - ADD THE EXTENSION FROM THE MENU**
+2. **Install the Script:**
+    * Click here: **[WplacePro-777.user.js](https://github.com/T-Raptor/Wplace_777-Overlay-Pro/raw/refs/heads/main/WplacePro-777.user.js)**
+    * Violentmonkey will prompt you to install. Click **Install**.
 
-   - [Tampermonkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-   - [Tampermonkey for Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
-   - [Other browsers](https://www.tampermonkey.net/)
+## **2. Quick Start: Placing Your First Design**
 
-2. Install the Script:  
-    Once you have Tampermonkey, simply go to the Release page on GitHub and click on https://github.com/Lamechial/Wplace_VoX-Overlay-Pro/releases/download/v4.9.2/WplacePro-VoX.user-English.js or the **WplacePro-VoX.user.English.js** file.  
-    Tampermonkey will open automatically and ask you to install the script.
+Follow these three steps to get your image on the canvas.
 
----
+1. **Create:** Open the **Overlays** tab and click `+ Add`.
+2. **Upload:** In the **Editor** tab, paste an image URL or pick a file from your computer.
+3. **Position:**
+   1. After picking your image, it asks you to set its position.
+   2. Done! Your overlay is now locked in place.
 
-## **2. Your First Overlay: The Essential Steps**
+### Changing Position
 
-This is the main function of the script. Follow these steps to place your first design on the canvas.
+1. Click the **Set Position: OFF** button (it will turn **ON**).
+2. Click the exact pixel on the game canvas where the **top-left corner** of your image should go.
 
-**Step 1: Create a New Overlay**  
-In the script panel, go to the **Overlays** tab and click the **+ Add** button. This will create a new space for your image.
+## **3. Main Controls**
 
-**Step 2: Add Your Image**  
-With the new overlay selected, go to the **Editor** tab. You have two ways to add your image:
-- **From a URL:** Paste a direct link to an image (.png, .jpg, etc.) into the text field and click **Upload**. 
-- **From a Local File:** Click the dotted box or drag and drop an image file from your computer.  
-*(Note: Overlays with local images cannot be exported or shared with others).*
+Quickly manage how you view the game and your template.
 
-**Step 3: Set the Position (The most important step!)**  
-Once the image is uploaded, the script needs to know where to place it on the canvas.
-1. Click **Set Position: OFF** button to activate it. It will change to **Set Position: ON**.  
-2. Go to the game canvas and click on the exact pixel that corresponds to the upper left corner (0,0) of your image.  
-3. Done! The script will set the image at that coordinate. **Set Position** mode will automatically be deactivated.
+* **Overlay: ON/OFF:** Toggles your template visibility.
+* **Mode:**
+  * *Minify (Recommended):* Shows your design as dashes or unique symbol patterns for each color, so you can see the canvas below.
+    >You can choose between two minify styles in the **Tools** tab.
+  * *Behind/Above:* Shows the full image behind or on top of pixels.
+  * *Original:* Hides the overlay to view the raw canvas.
+* **Show Errors:** Highlights incorrect pixels in **red**.
+* **Set Position:** Reactivates the positioning tool to move your overlay.
 
----
-
-## **3. The Main Panel: An Overview**
-
-The interface is designed to be powerful yet intuitive. Here is an overview of the main controls:
-
-- **Overlay: ON/OFF** → Enables or disables the display of all your overlays.
-- **Mode: Minify** → Changes how the overlay is displayed:
-   - *Minify (Recommended):* Displays your design as a grid of dots, allowing you to see the canvas underneath.
-   - *Behind/Above:* Displays the entire image behind or in front of the canvas.
-   - *Original:* Does not modify the canvas, ideal for viewing the actual state of the mural.
-- **Show Errors: ON/OFF** → Highlights pixels on the canvas that do not match your design in red.
-- **Set Position: ON/OFF** → Activates the mode to set the position of your image on the canvas again.
-
----
-
-## **4. Detailed Functions by Tab**
+## **4. Feature Overview**
 
 ### **Overlays Tab**
-Here you can manage all your images.
 
-- **Activate an Overlay:** Click the radio button next to the name to select it as the active overlay (only one can be active at a time).
-- **Enable/Disable:** Use the checkbox to show or hide a specific overlay without having to delete it.
-- **Preview:** When you select an overlay with an image, a preview will appear at the bottom.
-- **Import/Export:** Share your designs with others using the **Import** and **Export** buttons.
+* **Select:** Click the radio button to choose which overlay is active.
+* **Reorder:** Drag and drop overlays using the handle (⋮) to organize them in your preferred order.
+* **Visibility:** Use the checkbox to hide a layer without deleting it.
+* **Import/Export:** Share your templates with teammates.
 
 ### **Editor Tab**
-Here you can adjust the overlay you have active.
 
-- **Name:** Change the name of your overlay to better organize your work.
-- **Image Tools:**
-   - **Save:** Download the current version of the overlay image to your computer.
-   - **Resize:** Open an advanced menu to change the size of your image.
-   - **Color Tools:** Match the colors of your image to the official palette.
-- **Opacity:** Adjust the transparency of your overlay.
-- **Fine-Tuning (Nudge):** Use the arrows to move your overlay pixel by pixel.
+* **Resize:** Change your image dimensions.
+* **Opacity:** Adjust how transparent the image is.
+* **Nudge:** Use arrows to move the overlay pixel-by-pixel for perfect alignment.
+* **Color Tools:** Auto-match your image colors to the game palette.
 
 ### **Tools Tab**
-Here you will find the most powerful utilities of the script.
 
-- **Copy Canvas:**
-   1. Click **Set Point A** and then click on a pixel on the canvas.
-   2. Click **Set Point B** to mark the opposite corner.
-   3. Use **View Area** to check the selection.
-   4. Click **Scan and Download** to save the selected area.
+* **Minify Display:** Choose how the minify mode renders pixels:
+  * *Dashes:* Fast rendering with color-coded dash patterns through each pixel.
+  * *Symbols:* Each color gets a unique symbol shape for easier visual distinction (slightly slower).
+* **Copy Canvas:** Select "Point A" and "Point B" on the map to scan and download that area as an image.
+* **Overlay Progress:**
+  * Displays a floating tracker showing how much is left to paint.
+  * **Highlight Missing:** Turns unpainted pixels **cyan** for easy spotting.
 
-- **Show Overlay Progress:**
-   - When enabled, a floating panel appears showing the real-time progress of your overlay.
-   - **Highlight Missing:** Mark the pixels that are still missing in cyan.
-   - **Settings (⚙️):** Options to sort by quantity, highlight available colors, and adjust transparency.
-   - **Collapse Panel:** Minimizes the panel so it doesn't get in the way while you paint.
+## **5. Settings**
 
----
-
-## **5. Settings and Support**
-
-- **General Settings:**
-   - Interface theme (light/dark).
-   - Main panel transparency.
-
-- **Support the Project:**  
-   This project is free and made with dedication. If you find it useful, please consider supporting its development with a donation (you will find the option in the Settings menus).
+* **Settings:**
+  * Toggle Light/Dark mode or adjust menu transparency.
+  * **Accent Color:** Customize the interface accent color by entering any hex color code (e.g., #8f0000). Use the ❌ button to reset to default red.
 
 ---
 
-Enjoy creating and coordinating your projects on **wplace.live**!
+**Happy painting on wplace.live!** 🖌️
