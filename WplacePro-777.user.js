@@ -915,7 +915,8 @@ function showToast(message, duration = 3000) {
     caShowColorNames: true,
     caShowProgress: true,
     caShowRemainingOnly: false,
-    lastKnownColors: []
+    lastKnownColors: [],
+    customAccentColor: '#8f0000'
   };
   const CONFIG_KEYS = Object.keys(config);
 
@@ -935,21 +936,23 @@ function showToast(message, duration = 3000) {
   }
 
 function injectStyles() {
+    const accentColor = config.customAccentColor || '#8f0000';
+    const accentRGB = `${parseInt(accentColor.slice(1,3), 16)}, ${parseInt(accentColor.slice(3,5), 16)}, ${parseInt(accentColor.slice(5,7), 16)}`;
     const style = document.createElement('style');
     style.textContent = `
       body.op-theme-light {
         --op-bg: #e4e4e4; --op-border: #cccccc; --op-muted: #666666; --op-text: #1f1f1f;
         --op-subtle: #f5f5f5; --op-btn: #d8d8d8; --op-btn-border: #c0c0c0; --op-btn-hover: #cfcfcf;
-        --op-accent: #8f0000;
-        --op-active-bg: #8f0000;
+        --op-accent: ${accentColor};
+        --op-active-bg: ${accentColor};
         --op-active-text: #e4e4e4;
         --op-neon-green: #39FF14;
       }
       body.op-theme-dark {
         --op-bg: #1f1f1f; --op-border: #3a3a3a; --op-muted: #a0a0a0; --op-text: #e4e4e4;
         --op-subtle: #2a2a2a; --op-btn: #3a3a3a; --op-btn-border: #4a4a4a; --op-btn-hover: #454545;
-        --op-accent: #8f0000;
-        --op-active-bg: #8f0000;
+        --op-accent: ${accentColor};
+        --op-active-bg: ${accentColor};
         --op-active-text: #e4e4e4;
         --op-neon-green: #39FF14;
       }
@@ -963,7 +966,7 @@ function injectStyles() {
         border: 1px solid var(--op-border);
         border-radius: 16px; color: var(--op-text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
         font-size: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25), 0 0 0 1px rgba(143, 0, 0, 0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25), 0 0 0 1px rgba(${accentRGB}, 0.2);
         user-select: none;
       }
       #overlay-pro-panel { width: 340px; }
@@ -1009,14 +1012,16 @@ function injectStyles() {
 
       .op-input, .op-select { background: var(--op-bg); border: 1px solid var(--op-border); color: var(--op-text); border-radius: 10px; padding: 6px 8px; width: 100%; box-sizing: border-box; transition: all 0.2s ease; }
       .op-input:focus, .op-select:focus { border-color: var(--op-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--op-accent) 20%, transparent); }
+      .op-input.op-valid { border-color: #39FF14; }
+      .op-input.op-invalid { border-color: #ff3b30; }
 
       /* SLIDER STYLES */
       input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; cursor: pointer; }
       input[type="range"]:focus { outline: none; }
-      input[type="range"]::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, #8f0000); border-radius: 4px; }
-      input[type="range"]::-moz-range-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, #8f0000); border-radius: 4px; }
-      input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -6px; height: 20px; width: 20px; background-color: #8f0000; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px #8f0000; }
-      input[type="range"]::-moz-range-thumb { height: 20px; width: 20px; background-color: #8f0000; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px #8f0000; }
+      input[type="range"]::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, ${accentColor}); border-radius: 4px; }
+      input[type="range"]::-moz-range-track { height: 8px; background: linear-gradient(90deg, #ff7e5f, ${accentColor}); border-radius: 4px; }
+      input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -6px; height: 20px; width: 20px; background-color: ${accentColor}; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px ${accentColor}; }
+      input[type="range"]::-moz-range-thumb { height: 20px; width: 20px; background-color: ${accentColor}; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px ${accentColor}; }
 
       .op-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; border: 1px solid var(--op-border); padding: 6px; border-radius: 10px; background: var(--op-bg); }
       .op-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px; border-radius: 8px; border: 1px solid var(--op-border); background: var(--op-subtle); }
@@ -1459,6 +1464,14 @@ panel.innerHTML = `
             <label>Panel Transparency</label>
         </div>
         <input type="range" id="op-panel-alpha-slider" min="0.4" max="1" step="0.05">
+        <div class="op-settings-row" style="margin-top: 12px; align-items: center;">
+            <label for="op-accent-color-input">Accent Color</label>
+            <input type="text" class="op-input" id="op-accent-color-input" placeholder="#8f0000" maxlength="7" style="width: 90px; margin: 0 5px 0 auto;">
+            <button class="op-button" id="op-accent-color-reset" title="Reset to default">❌</button>
+        </div>
+        <div class="op-settings-row">
+            <span class="op-muted" id="op-accent-color-status" style="font-size: 12px;">Enter a hex color code (e.g., #8f0000)</span>
+        </div>
     `;
     document.body.appendChild(settingsModal);
 
@@ -2103,6 +2116,84 @@ function addEventListeners() {
     });
     panelAlphaSlider.addEventListener('change', () => {
         saveConfig(['panelAlpha']);
+    });
+
+    // --- Accent Color Customization ---
+    const accentColorInput = $('op-accent-color-input');
+    const accentColorReset = $('op-accent-color-reset');
+    const accentColorStatus = $('op-accent-color-status');
+
+    const validateHexColor = (hex) => {
+        return /^#[0-9A-Fa-f]{6}$/.test(hex);
+    };
+
+    const updateAccentColor = (color) => {
+        if (!validateHexColor(color)) return false;
+        
+        // Update CSS custom properties
+        const style = document.querySelector('style');
+        if (style && style.textContent) {
+            style.textContent = style.textContent
+                .replace(/--op-accent:\s*#[0-9A-Fa-f]{6}/g, `--op-accent: ${color}`)
+                .replace(/--op-active-bg:\s*#[0-9A-Fa-f]{6}/g, `--op-active-bg: ${color}`)
+                .replace(/rgba\(143,\s*0,\s*0,\s*0\.2\)/g, `rgba(${parseInt(color.slice(1,3), 16)}, ${parseInt(color.slice(3,5), 16)}, ${parseInt(color.slice(5,7), 16)}, 0.2)`)
+                .replace(/linear-gradient\(90deg,\s*#ff7e5f,\s*#[0-9A-Fa-f]{6}\)/g, `linear-gradient(90deg, #ff7e5f, ${color})`)
+                .replace(/background-color:\s*#[0-9A-Fa-f]{6};\s*border-radius:\s*50%;\s*border:\s*2px\s*solid\s*var\(--op-subtle\);\s*box-shadow:\s*0\s*0\s*5px\s*#[0-9A-Fa-f]{6}/g, 
+                    `background-color: ${color}; border-radius: 50%; border: 2px solid var(--op-subtle); box-shadow: 0 0 5px ${color}`);
+        }
+        
+        config.customAccentColor = color;
+        saveConfig(['customAccentColor']);
+        return true;
+    };
+
+    accentColorInput.value = config.customAccentColor || '#8f0000';
+
+    accentColorInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        
+        if (!value) {
+            accentColorInput.classList.remove('op-valid', 'op-invalid');
+            accentColorStatus.textContent = 'Enter a hex color code (e.g., #8f0000)';
+            accentColorStatus.style.color = '';
+            return;
+        }
+        
+        if (validateHexColor(value)) {
+            accentColorInput.classList.remove('op-invalid');
+            accentColorInput.classList.add('op-valid');
+            accentColorStatus.textContent = 'Valid color - press Enter to apply';
+            accentColorStatus.style.color = '#39FF14';
+        } else {
+            accentColorInput.classList.remove('op-valid');
+            accentColorInput.classList.add('op-invalid');
+            accentColorStatus.textContent = 'Invalid hex color (use format: #RRGGBB)';
+            accentColorStatus.style.color = '#ff3b30';
+        }
+    });
+
+    accentColorInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const value = e.target.value.trim();
+            if (updateAccentColor(value)) {
+                accentColorStatus.textContent = 'Accent color applied!';
+                accentColorStatus.style.color = '#39FF14';
+                showToast('Accent color updated!');
+            } else {
+                accentColorStatus.textContent = 'Invalid hex color (use format: #RRGGBB)';
+                accentColorStatus.style.color = '#ff3b30';
+            }
+        }
+    });
+
+    accentColorReset.addEventListener('click', () => {
+        const defaultColor = '#8f0000';
+        accentColorInput.value = defaultColor;
+        updateAccentColor(defaultColor);
+        accentColorInput.classList.remove('op-valid', 'op-invalid');
+        accentColorStatus.textContent = 'Reset to default red';
+        accentColorStatus.style.color = '#39FF14';
+        showToast('Accent color reset to default!');
     });
 
     // --- Color Analysis Panel Settings Modal & Switches ---
