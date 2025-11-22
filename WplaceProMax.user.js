@@ -411,7 +411,7 @@
     if (config.minifyStyle === 'symbols') {
       const scale = MINIFY_SCALE_SYMBOL;
       const sig = overlaySignature(ov);
-      const cacheKey = `${ov.id}|${sig}|minify|s${scale}|style:symbols|${targetChunk1}|${targetChunk2}`;
+      const cacheKey = `${ov.id}|${sig}|minify|s${scale}|style:symbols|${targetChunk1}|${targetChunk2}|filter=${config.caIsFilterActive}`;
       if (overlayCache.has(cacheKey)) return overlayCache.get(cacheKey);
 
       const tileW = TILE_SIZE * scale;
@@ -430,6 +430,7 @@
 
       const centerX = (scale - SYMBOL_W) >> 1;
       const centerY = (scale - SYMBOL_H) >> 1;
+      const filterSet = config.caIsFilterActive ? new Set(config.caActiveColorFilter) : null;
 
       for (let y = 0; y < TILE_SIZE; y++) {
         for (let x = 0; x < TILE_SIZE; x++) {
@@ -444,6 +445,7 @@
             if (a <= 128) continue;
 
             const colorKey = `${r},${g},${b}`;
+            if (filterSet && !filterSet.has(colorKey)) continue;
             let colorIndex = colorIndexMap.get(colorKey);
             if (colorIndex === undefined) {
               colorIndex = findColorIndexLUT(r, g, b);
